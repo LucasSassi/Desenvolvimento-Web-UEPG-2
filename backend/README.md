@@ -2,7 +2,7 @@
 
 Backend de consulta meteorológica por CEP brasileiro, com Node.js, Express e TypeScript. Consulta o ViaCEP para identificar o endereço, encontra a cidade pela Open-Meteo Geocoding e obtém condições atuais e previsões pela Open-Meteo Weather. Não usa banco de dados, armazenamento de clima ou autenticação.
 
-## Instalação e execução no Ubuntu
+## Como executar
 
 Requisitos: Node.js **22 ou superior**, npm e acesso à internet por HTTPS. O projeto foi verificado com Node.js 24. Se necessário, instale uma versão LTS compatível pelas [instruções oficiais do Node.js](https://nodejs.org/en/download).
 
@@ -10,14 +10,13 @@ No terminal, a partir da pasta deste projeto:
 
 ```bash
 cd backend
-node --version
-npm --version
-npm ci
-cp .env.example .env
+npm install
 npm run dev
 ```
 
 A API inicia em `http://localhost:3000`. `npm run dev` reinicia o servidor quando arquivos TypeScript mudam. Execute os comandos npm dentro de `backend/`.
+
+Execute `npm install` na primeira vez e quando as dependências mudarem. Nas próximas vezes, entre em `backend/` e execute apenas `npm run dev`.
 
 Para compilar e executar o JavaScript:
 
@@ -31,6 +30,8 @@ Para encerrar, use `Ctrl+C`.
 ## Configuração
 
 As variáveis são carregadas do arquivo `.env` com dotenv e validadas com Zod na inicialização. Sem `.env`, são usados os padrões abaixo.
+
+Para alterar algum padrão, copie `.env.example` para `.env`, edite os valores e reinicie o servidor. Esse passo é opcional para rodar localmente.
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |

@@ -16,7 +16,7 @@ No primeiro, inicie o backend:
 
 ```bash
 cd backend
-npm ci
+npm install
 npm run dev
 ```
 
@@ -24,11 +24,13 @@ No segundo, inicie o frontend:
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
 
-Abra a URL exibida pelo Vite, normalmente `http://localhost:5173`. O comando `npm ci` instala as dependências e pode ser omitido quando elas já estiverem instaladas e atualizadas.
+Abra a URL exibida pelo Vite, normalmente `http://localhost:5173`.
+
+Execute `npm install` na primeira vez e quando as dependências mudarem. Nas próximas vezes, entre em cada pasta e execute apenas `npm run dev`. Para encerrar, use `Ctrl+C` em cada terminal.
 
 ## Configuração do backend
 
