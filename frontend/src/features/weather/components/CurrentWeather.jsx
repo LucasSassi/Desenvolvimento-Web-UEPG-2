@@ -1,6 +1,6 @@
 import { formatMeasurement } from '../formatWeather';
 
-// Códigos WMO usados pela Open-Meteo: https://open-meteo.com/en/docs (seção "WMO Weather interpretation codes").
+// Códigos WMO usados pela Open-Meteo: https://open-meteo.com/en/docs.
 const WEATHER_CONDITIONS = {
   0: ['☀️', 'Céu limpo'],
   1: ['🌤️', 'Predominantemente limpo'],
@@ -40,7 +40,6 @@ const UV_LEVELS = [
   { max: Infinity, label: 'Extremo', className: 'bg-fuchsia-500/40' },
 ];
 
-// Faixa usada para o gradiente: abaixo de COLD_TEMP fica todo azul, acima de HOT_TEMP todo laranja.
 const COLD_TEMP = 10;
 const HOT_TEMP = 32;
 const NEUTRAL_WARMTH = 0.5;
@@ -70,7 +69,6 @@ export function CurrentWeather({ location, current }) {
   const uvIndex = formatMeasurement(current.uvIndex);
   const uvLevel = current.uvIndex === null ? null : UV_LEVELS.find((level) => current.uvIndex <= level.max);
   const address = [location.street, location.neighborhood].filter(Boolean).join(', ');
-  // O gradiente tem 3x a largura do cartão; a temperatura escolhe qual trecho (azul → laranja) aparece.
   const backgroundStyle = {
     backgroundImage: TEMPERATURE_GRADIENT,
     backgroundSize: '300% 100%',

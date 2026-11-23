@@ -3,7 +3,6 @@ import { WeatherCondition } from './CurrentWeather';
 
 function getWeekday(date, index) {
   if (index === 0) return 'Hoje';
-  // Meio-dia local evita que o fuso do navegador mude o dia da data ISO.
   return new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long' });
 }
 

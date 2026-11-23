@@ -17,7 +17,6 @@ export function CepSearch({ onSearch, isLoading }) {
   }
 
   function handleCepChange(event) {
-    // Máscara 00000-000: mantém só dígitos e insere o hífen depois do quinto.
     const digits = event.target.value.replace(/\D/g, '').slice(0, CEP_DIGITS);
     const masked = digits.length > CEP_PREFIX_DIGITS
       ? `${digits.slice(0, CEP_PREFIX_DIGITS)}-${digits.slice(CEP_PREFIX_DIGITS)}`
