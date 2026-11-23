@@ -37,9 +37,19 @@ export function App() {
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">ClimaCEP</h1>
-        <p>Consulte as condições atuais e a previsão do tempo pelo CEP.</p>
+      <header className="space-y-3 pt-6">
+        <h1 className="flex items-center gap-3 text-4xl font-extrabold tracking-tight text-sky-700 sm:text-5xl">
+          <span
+            aria-hidden="true"
+            className="grid size-12 place-items-center rounded-2xl bg-sky-600 text-2xl text-white shadow-lg shadow-sky-600/30"
+          >
+            ☀
+          </span>
+          ClimaCEP
+        </h1>
+        <p className="max-w-xl text-lg text-slate-600">
+          Consulte as condições atuais e a previsão do tempo pelo CEP.
+        </p>
       </header>
       <CepSearch onSearch={searchWeather} isLoading={isLoading} />
       <div role="status" aria-live="polite">
