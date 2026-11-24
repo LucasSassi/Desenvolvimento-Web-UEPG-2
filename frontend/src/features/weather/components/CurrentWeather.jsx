@@ -1,6 +1,5 @@
 import { formatMeasurement } from '../formatWeather';
 
-// Códigos WMO usados pela Open-Meteo: https://open-meteo.com/en/docs.
 const WEATHER_CONDITIONS = {
   0: ['☀️', 'Céu limpo'],
   1: ['🌤️', 'Predominantemente limpo'],
