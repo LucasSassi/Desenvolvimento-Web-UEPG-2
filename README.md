@@ -1,6 +1,6 @@
 # ClimaCEP
 
-Consulta de clima por CEP, com previsão por hora, previsão de sete dias e favoritos compartilhados, sem login.
+Consulta de clima por CEP, com previsão por hora, previsão de sete dias e favoritos compartilhados; sem login. Também é possível consultar o CEP correspondente ao endereço digitado.
 
 React, Vite e Tailwind no frontend; Node.js, Express e TypeScript no backend; PostgreSQL para favoritos. Dados de ViaCEP, Open-Meteo e GeoNames.
 
