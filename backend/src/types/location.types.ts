@@ -10,10 +10,16 @@ export const brazilianStates = {
   SE: 'Sergipe', TO: 'Tocantins',
 } as const;
 
+export type BrazilianState = keyof typeof brazilianStates;
+
+export const brazilianStateSchema = z.enum(
+  Object.keys(brazilianStates) as [BrazilianState, ...BrazilianState[]],
+);
+
 export const viaCepSchema = z.object({
   cep: z.string().regex(/^\d{5}-?\d{3}$/),
   localidade: z.string().trim().min(1),
-  uf: z.enum(Object.keys(brazilianStates) as [keyof typeof brazilianStates, ...(keyof typeof brazilianStates)[]]),
+  uf: brazilianStateSchema,
   bairro: z.string().nullish(),
   logradouro: z.string().nullish(),
 });
@@ -22,6 +28,8 @@ export const viaCepResponseSchema = z.union([
   z.object({ erro: z.union([z.literal(true), z.literal('true')]) }),
   viaCepSchema.extend({ erro: z.union([z.literal(false), z.literal('false')]).optional() }),
 ]);
+
+export const viaCepSearchResponseSchema = z.array(viaCepSchema);
 
 export const geocodingResultSchema = z.object({
   id: z.number().int().positive(),
@@ -45,7 +53,7 @@ export type GeocodingResult = z.infer<typeof geocodingResultSchema>;
 export interface Location {
   cep: string;
   city: string;
-  state: keyof typeof brazilianStates;
+  state: BrazilianState;
   neighborhood: string | null;
   street: string | null;
 }
