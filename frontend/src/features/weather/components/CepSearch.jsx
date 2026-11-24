@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
-import { Button } from '../../../shared/components/Button';
-import { Input } from '../../../shared/components/Input';
+import { Button } from '../../../shared/ui/Button';
+import { Input } from '../../../shared/ui/Input';
 
 const CEP_DIGITS = 8;
 const CEP_PREFIX_DIGITS = 5;

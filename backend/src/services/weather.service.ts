@@ -1,8 +1,14 @@
-import { getAddress } from '../clients/viacep.client.js';
+import { getAddress, searchAddresses } from '../clients/viacep.client.js';
 import { searchCity } from '../clients/geocoding.client.js';
 import { getForecast } from '../clients/open-meteo.client.js';
 import { AppError } from '../errors/app.error.js';
-import { brazilianStates, type GeocodingResult, type ViaCepLocation } from '../types/location.types.js';
+import {
+  brazilianStates,
+  type BrazilianState,
+  type GeocodingResult,
+  type Location,
+  type ViaCepLocation,
+} from '../types/location.types.js';
 import type { WeatherResponse } from '../types/weather.types.js';
 
 function normalizeName(value: string): string {
@@ -42,6 +48,26 @@ function identifyCity(address: ViaCepLocation, candidates: GeocodingResult[]): G
   return match;
 }
 
+function mapViaCepToLocation(address: ViaCepLocation): Location {
+  const digits = address.cep.replace(/\D/g, '');
+  return {
+    cep: `${digits.slice(0, 5)}-${digits.slice(5)}`,
+    city: address.localidade,
+    state: address.uf,
+    neighborhood: address.bairro?.trim() || null,
+    street: address.logradouro?.trim() || null,
+  };
+}
+
+export async function searchLocationsByAddress(
+  uf: BrazilianState,
+  city: string,
+  street: string,
+): Promise<Location[]> {
+  const addresses = await searchAddresses(uf, city, street);
+  return addresses.map(mapViaCepToLocation);
+}
+
 export async function getWeatherByCep(cep: string): Promise<WeatherResponse> {
   const address = await getAddress(cep);
   const coordinates = identifyCity(address, await searchCity(address.localidade));
@@ -53,13 +79,7 @@ export async function getWeatherByCep(cep: string): Promise<WeatherResponse> {
   const currentDate = current.time.slice(0, 10);
 
   return {
-    location: {
-      cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
-      city: address.localidade,
-      state: address.uf,
-      neighborhood: address.bairro?.trim() || null,
-      street: address.logradouro?.trim() || null,
-    },
+    location: mapViaCepToLocation(address),
     current: {
       temperature: current.temperature_2m,
       apparentTemperature: current.apparent_temperature ?? null,
