@@ -149,3 +149,7 @@ trabalho_ferrasa_2/
                 ├── Button.jsx — Fornece um botão reutilizável com estilo padronizado.
                 └── Input.jsx — Fornece um campo de entrada reutilizável com estilo padronizado.
 ```
+
+systemctl is-active postgresql
+sudo systemctl stop postgresql
+sudo systemctl start postgresql
