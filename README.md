@@ -54,65 +54,65 @@ CREATE TABLE IF NOT EXISTS favorites (
 
 ## Pastas e arquivos
 
-O backend separa as rotas HTTP, a validação das requisições, as regras da aplicação, o acesso ao banco e as chamadas a serviços externos.
+O backend usa arquitetura em camadas: as rotas encaminham as requisições aos controllers, que validam as entradas e chamam os services. Os services coordenam as regras da aplicação e usam clients para consultar APIs externas ou o repository para acessar os favoritos no PostgreSQL. As rotas são montadas sob o prefixo `/api`.
 
-O frontend se baseia em FSD: `app` contém o componente raiz e os estilos, `pages` compõe as telas, `features` agrupa as funcionalidades e `shared` reúne componentes reutilizáveis. Dentro das funcionalidades, `api` faz requisições ao backend, `ui` contém componentes React e `lib` contém funções auxiliares.
+O frontend tem uma organização inspirada em Feature-Sliced Design (FSD): `app` contém o componente raiz e os estilos, `pages` compõe as telas, `features` agrupa as funcionalidades e `shared` reúne componentes reutilizáveis. Dentro das funcionalidades, `api` faz requisições ao backend, `ui` contém componentes React e `lib` contém funções auxiliares.
 
 A tela atual segue `main.jsx → app/App.jsx → pages/home/HomePage.jsx`, que combina previsão e favoritos. `src/App.jsx` e `features/weather/components/` são arquivos antigos ainda presentes, fora desse fluxo; os componentes atuais da previsão ficam em `features/weather/ui/`.
 
-Os `.env` são configurações locais criadas a partir dos exemplos. A árvore omite `node_modules/` (dependências instaladas), `dist/` (arquivos gerados pelo build) e `.git/` (histórico e controle de versões).
+Os `.env` são configurações locais criadas a partir dos exemplos e ignoradas pelo Git. A árvore inclui esses arquivos locais e os arquivos-fonte e de configuração; omite `node_modules/` (dependências instaladas), `dist/` (arquivos gerados pelo build) e `.git/` (histórico e controle de versões). A previsão é calculada para a cidade do CEP; os favoritos são compartilhados por todos os usuários desta instalação, sem autenticação.
 
 ```text
 trabalho_ferrasa_2/
 ├── README.md — Explica como executar o projeto e a função dos arquivos.
 ├── backend/ — API HTTP de clima e favoritos.
-│   ├── .env — Guarda as configurações locais da API e do banco.
-│   ├── .env.example — Fornece um modelo das configurações.
+│   ├── .env — Configura localmente porta, origem CORS, tempo limite HTTP e conexão opcional com o banco.
+│   ├── .env.example — Modelo das variáveis PORT, CORS_ORIGIN, HTTP_TIMEOUT_MS e DATABASE_URL.
 │   ├── .gitignore — Define quais arquivos o Git deve ignorar.
 │   ├── package.json — Define as dependências e os comandos do backend.
 │   ├── package-lock.json — Registra as versões exatas das dependências.
 │   ├── tsconfig.json — Configura a verificação e a compilação do TypeScript.
 │   └── src/ — Código-fonte da API.
-│       ├── app.ts — Configura o Express, o CORS, as rotas e os middlewares.
-│       ├── server.ts — Inicia o servidor e encerra suas conexões ao desligar.
+│       ├── app.ts — Configura Express e CORS, monta as rotas em /api e registra o tratamento de rota inexistente e de erros.
+│       ├── server.ts — Inicia o servidor HTTP e coordena o encerramento dele e do pool PostgreSQL em SIGINT ou SIGTERM.
 │       ├── clients/ — Comunicação com ViaCEP e Open-Meteo.
-│       │   ├── geocoding.client.ts — Busca as coordenadas da cidade.
-│       │   ├── http.client.ts — Centraliza chamadas externas, validações e tempo limite.
-│       │   ├── open-meteo.client.ts — Consulta as condições atuais e a previsão.
-│       │   └── viacep.client.ts — Consulta o endereço correspondente ao CEP.
+│       │   ├── geocoding.client.ts — Busca cidades brasileiras e suas coordenadas no Open-Meteo Geocoding.
+│       │   ├── http.client.ts — Executa chamadas HTTP externas, aplica tempo limite, valida o JSON com Zod e padroniza falhas.
+│       │   ├── open-meteo.client.ts — Consulta condições atuais e previsões horárias e diárias de sete dias por coordenadas.
+│       │   └── viacep.client.ts — Consulta endereço por CEP e busca endereços por UF, cidade e logradouro no ViaCEP.
 │       ├── config/ — Configuração de ambiente e acesso ao banco.
-│       │   ├── database.ts — Gerencia as conexões e consultas ao PostgreSQL.
-│       │   └── env.ts — Carrega e valida as variáveis de ambiente.
+│       │   ├── database.ts — Cria o pool PostgreSQL sob demanda, executa consultas e traduz falhas de conexão e de CEP duplicado.
+│       │   └── env.ts — Carrega o .env com dotenv e valida as configurações com Zod, aplicando valores padrão.
 │       ├── controllers/ — Validação das entradas HTTP e envio das respostas.
-│       │   ├── favorite.controller.ts — Valida as requisições de favoritos e envia as respostas.
-│       │   └── weather.controller.ts — Valida o CEP e responde com a previsão.
+│       │   ├── favorite.controller.ts — Valida IDs e corpos de cadastro/edição, chama o service e responde às operações de favoritos.
+│       │   └── weather.controller.ts — Valida o CEP ou os parâmetros de busca por endereço, chama o service e retorna JSON.
 │       ├── errors/ — Definição dos erros da aplicação.
 │       │   └── app.error.ts — Define erros com código, mensagem e status HTTP.
 │       ├── middlewares/ — Tratamento dos erros encaminhados pelo Express.
-│       │   └── error.middleware.ts — Converte erros em respostas padronizadas.
+│       │   └── error.middleware.ts — Retorna erros em JSON com código e mensagem; trata AppError, JSON inválido, corpo excessivo e falhas inesperadas.
 │       ├── repositories/ — Leitura e gravação dos favoritos com SQL.
-│       │   └── favorite.repository.ts — Executa o SQL das operações de favoritos.
+│       │   └── favorite.repository.ts — Lista, insere, renomeia e exclui favoritos com SQL parametrizado e converte registros para o formato da API.
 │       ├── routes/ — Métodos e caminhos HTTP ligados aos seus handlers.
-│       │   ├── favorite.routes.ts — Define os endpoints de favoritos.
-│       │   ├── health.routes.ts — Disponibiliza uma rota para verificar se a API responde.
-│       │   └── weather.routes.ts — Define o endpoint de previsão por CEP.
+│       │   ├── favorite.routes.ts — Define GET/POST /favorites e PATCH/DELETE /favorites/:id; limita o corpo JSON a 10 KB.
+│       │   ├── health.routes.ts — Define GET /health para verificar a resposta da API, sem testar banco ou serviços externos.
+│       │   └── weather.routes.ts — Define GET /weather/:cep e GET /weather/cep/search para previsão e busca de CEP por endereço.
 │       ├── services/ — Regras e coordenação das consultas e dos favoritos.
-│       │   ├── favorite.service.ts — Coordena as operações de favoritos e verifica o CEP no cadastro.
-│       │   └── weather.service.ts — Combina endereço, coordenadas e dados meteorológicos.
+│       │   ├── favorite.service.ts — Valida a existência do CEP no ViaCEP ao cadastrar e trata favoritos inexistentes ao editar ou excluir.
+│       │   └── weather.service.ts — Busca CEPs por endereço ou combina endereço, identificação da cidade e previsão; retorna até 24 horários e sete dias, incluindo hoje.
 │       └── types/ — Tipos TypeScript e schemas Zod para validar dados.
-│           ├── favorite.types.ts — Define os tipos e as validações dos favoritos.
-│           ├── location.types.ts — Define os tipos e as validações de localização.
-│           └── weather.types.ts — Define os tipos e as validações meteorológicas.
+│           ├── favorite.types.ts — Define o tipo de favorito e schemas Zod para cadastro, edição do nome e ID.
+│           ├── location.types.ts — Define UFs, tipos de localização e schemas das respostas do ViaCEP e da geocodificação.
+│           └── weather.types.ts — Define o contrato da previsão e valida a resposta meteorológica, incluindo tamanhos e ordem das séries.
 └── frontend/ — Interface web em React.
-    ├── .env — Guarda o endereço local do backend.
-    ├── .env.example — Fornece um modelo de configuração do backend.
+    ├── .env — Define BACKEND_URL, destino do proxy /api do servidor de desenvolvimento Vite.
+    ├── .env.example — Modelo da variável BACKEND_URL para configurar o proxy de desenvolvimento.
     ├── .gitignore — Define quais arquivos o Git deve ignorar.
     ├── index.html — Fornece o HTML onde o React monta a aplicação.
     ├── package.json — Define as dependências e os comandos do frontend.
     ├── package-lock.json — Registra as versões exatas das dependências.
-    ├── vite.config.js — Configura React, Tailwind e o encaminhamento das chamadas à API.
+    ├── vite.config.js — Ativa React e Tailwind, define a porta de desenvolvimento e encaminha /api ao backend durante o desenvolvimento.
     └── src/ — Código-fonte da interface.
-        ├── main.jsx — Inicializa o React com app/App.jsx e os estilos globais.
+        ├── main.jsx — Monta app/App.jsx no elemento root com StrictMode e importa os estilos globais.
         ├── App.jsx — Contém a versão antiga da tela, fora do fluxo atual.
         ├── app/ — Componente raiz e estilos globais da aplicação.
         │   ├── App.jsx — Renderiza a página inicial.
@@ -120,18 +120,18 @@ trabalho_ferrasa_2/
         │       └── index.css — Importa o Tailwind e define os estilos globais.
         ├── pages/ — Composição das telas com as funcionalidades.
         │   └── home/ — Página inicial de consulta e favoritos.
-        │       └── HomePage.jsx — Monta a tela e controla os dados, o carregamento e os erros da previsão.
+        │       └── HomePage.jsx — Compõe busca e favoritos, valida o CEP e controla dados, carregamento e erros da consulta de previsão.
         ├── features/ — Código agrupado por funcionalidade.
         │   ├── favorites/ — Cadastro, listagem, edição e exclusão de CEPs favoritos.
         │   │   ├── api/ — Requisições HTTP dos favoritos ao backend.
-        │   │   │   └── favorites.api.js — Faz as requisições de favoritos à API.
+        │   │   │   └── favorites.api.js — Encapsula listagem, cadastro, edição do nome e exclusão via /api/favorites e traduz erros para a interface.
         │   │   └── ui/ — Componentes e estados da interface de favoritos.
-        │   │       ├── FavoriteForm.jsx — Exibe o formulário de cadastro de favoritos.
-        │   │       ├── FavoriteItem.jsx — Exibe um favorito e suas ações.
-        │   │       └── Favorites.jsx — Carrega e organiza a lista e o formulário de favoritos.
+        │   │       ├── FavoriteForm.jsx — Valida CEP e nome, envia o cadastro e informa o favorito criado ao componente pai.
+        │   │       ├── FavoriteItem.jsx — Exibe um favorito, permite consultar a previsão, editar o nome e confirmar a exclusão.
+        │   │       └── Favorites.jsx — Carrega a lista, cancela a requisição ao desmontar e atualiza o estado após cadastro, edição ou exclusão.
         │   └── weather/ — Consulta por CEP e apresentação dos dados meteorológicos.
-        │       ├── api/ — Requisição HTTP da previsão ao backend.
-        │       │   └── weather.api.js — Solicita a previsão por CEP e trata erros da requisição.
+        │       ├── api/ — Requisições de previsão por CEP e busca de CEPs por endereço ao backend.
+        │       │   └── weather.api.js — Consulta /api/weather/:cep e /api/weather/cep/search e traduz erros para a interface.
         │       ├── components/ — Componentes antigos substituídos por ui/, fora do fluxo atual.
         │       │   ├── CepSearch.jsx — Contém a versão antiga do formulário de consulta.
         │       │   ├── CurrentWeather.jsx — Contém a versão antiga das condições atuais.
@@ -140,10 +140,11 @@ trabalho_ferrasa_2/
         │       ├── lib/ — Funções auxiliares de formatação da previsão.
         │       │   └── formatWeather.js — Formata medições, datas e horários.
         │       └── ui/ — Componentes usados atualmente para consultar e exibir a previsão.
-        │           ├── CepSearch.jsx — Exibe o formulário de consulta por CEP.
-        │           ├── CurrentWeather.jsx — Mostra as condições atuais e exporta WeatherCondition para as tabelas de previsão.
-        │           ├── DailyForecast.jsx — Exibe a previsão dos próximos sete dias.
-        │           └── HourlyForecast.jsx — Exibe a previsão das próximas 24 horas.
+        │           ├── AddressCepFinder.jsx — Busca CEPs por UF, cidade e logradouro e permite selecionar um resultado.
+        │           ├── CepSearch.jsx — Aplica máscara ao CEP, envia a consulta e abre a busca por endereço; ao selecionar um CEP, inicia a consulta.
+        │           ├── CurrentWeather.jsx — Exibe localização e condições atuais; exporta WeatherCondition, que converte códigos meteorológicos em ícones e descrições.
+        │           ├── DailyForecast.jsx — Exibe até sete dias, incluindo hoje, com mínimas, máximas, condição e chance de chuva.
+        │           └── HourlyForecast.jsx — Exibe até 24 horários locais com temperatura, condição, chance e volume de chuva e índice UV.
         └── shared/ — Código reutilizável pelas diferentes funcionalidades.
             └── ui/ — Componentes visuais genéricos, sem regras de clima ou favoritos.
                 ├── Button.jsx — Fornece um botão reutilizável com estilo padronizado.
